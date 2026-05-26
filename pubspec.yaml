@@ -1,0 +1,25 @@
+name: flutter_meetup_rive
+description: Rive + flutter_deck meetup presentation
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  rive: ^0.14.7
+  rive_viewmodel: ^1.0.0
+  flutter_deck: ^0.28.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/prez_rive.riv
