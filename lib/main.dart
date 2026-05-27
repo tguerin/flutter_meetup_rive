@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
+import 'package:rive/rive.dart' as rive;
 
 import 'slides/interactive_card_slide.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await rive.RiveNative.init();
   runApp(const MeetupDeck());
 }
 
