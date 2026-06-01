@@ -14,7 +14,8 @@ typed Dart bindings.
 ```bash
 mise install            # one-time — installs Flutter 3.41.9 per mise.toml
 flutter pub get
-flutter run -d chrome
+flutter run -d chrome                          # the slide deck (default)
+flutter run -d chrome -t lib/main_game.dart    # the standalone mini-game
 ```
 
 ## Deploy to GitHub Pages
@@ -22,9 +23,13 @@ flutter run -d chrome
 1. Push to `main`.
 2. **One-time**: GitHub → repo Settings → Pages → Build and deployment →
    Source = **GitHub Actions**.
-3. The `.github/workflows/deploy.yml` action builds with
-   `--base-href "/flutter_meetup_rive/"` and publishes `build/web`.
-4. URL: `https://<owner>.github.io/flutter_meetup_rive/`.
+3. The `.github/workflows/deploy.yml` action builds **two** Flutter web
+   targets and stitches them into one artifact:
+   - `lib/main.dart`     → root (`--base-href "/flutter_meetup_rive/"`)
+   - `lib/main_game.dart` → `/play/` (`--base-href "/flutter_meetup_rive/play/"`)
+4. URLs:
+   - Slides: `https://<owner>.github.io/flutter_meetup_rive/`
+   - Mini-game: `https://<owner>.github.io/flutter_meetup_rive/play/`
 
 The workflow uses `jdx/mise-action`, so the Flutter version pinned in
 `mise.toml` is also the one CI uses — no version drift.

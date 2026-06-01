@@ -25,7 +25,9 @@ jobs:
           experimental: true
 
       - run: flutter pub get
-      - run: flutter build web --release --base-href "/flutter_meetup_rive/"
+      - run: flutter build web --release --base-href "/flutter_meetup_rive/" -t lib/main.dart
+      - run: flutter build web --release --base-href "/flutter_meetup_rive/play/" -t lib/main_game.dart --output build/play
+      - run: mkdir -p build/web/play && cp -R build/play/. build/web/play/
 
       - uses: actions/configure-pages@v5
 
