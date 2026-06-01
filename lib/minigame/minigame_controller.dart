@@ -37,6 +37,8 @@ class MinigameController {
     '7',
   ];
 
+  static const _resolutionDelay = Duration(seconds: 1);
+
   final VmMiniGameViewModel _vm;
   late final List<VmCardViewModel> _cards;
   final List<StreamSubscription<bool>> _subscriptions = [];
@@ -46,6 +48,8 @@ class MinigameController {
   /// True once the user has picked a card this round; flips back to false on
   /// the next round.
   bool _resolved = false;
+  Timer? _resolutionTimer;
+  bool _disposed = false;
 
   void _setupRound() {
     _resolved = false;
@@ -101,14 +105,21 @@ class MinigameController {
     _resolved = true;
     final isWinner =
         card.valueCard == 'A' && card.symbolsCard == SymbolsCard.heart;
-    if (isWinner) {
-      _vm.triggerWin();
-    } else {
-      _vm.triggerLoose();
-    }
+    _resolutionTimer?.cancel();
+    _resolutionTimer = Timer(_resolutionDelay, () {
+      if (_disposed) return;
+      if (isWinner) {
+        _vm.triggerWin();
+      } else {
+        _vm.triggerLoose();
+      }
+    });
   }
 
   void dispose() {
+    _disposed = true;
+    _resolutionTimer?.cancel();
+    _resolutionTimer = null;
     for (final s in _subscriptions) {
       s.cancel();
     }
