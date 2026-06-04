@@ -5,7 +5,8 @@ import 'package:rive/rive.dart' as rive;
 import 'slides/betclic/betclic_brand.dart';
 import 'slides/betclic/betclic_content_slides.dart';
 import 'slides/betclic/betclic_cover_slides.dart';
-import 'slides/interactive_card_slide.dart';
+import 'slides/betclic/betclic_video_slide.dart';
+import 'slides/rive_step_slides.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,11 +57,34 @@ class MeetupDeck extends StatelessWidget {
           title: 'Your section title',
           pageNumber: 3,
         ),
-        const InteractiveCardSlide(),
+        BetclicVideoSlide(
+          route: '/rive-step-1-video',
+          title: 'Rive 1 — Design',
+          subtitle: 'How the designer built it in the Rive editor.',
+          asset: 'assets/record_step_1.mp4',
+          pageNumber: 4,
+        ),
+        RiveStep1Slide(pageNumber: 5),
+        BetclicVideoSlide(
+          route: '/rive-step-2-video',
+          title: 'Rive 2 — Animation & data binding',
+          subtitle: 'How the designer built it in the Rive editor.',
+          asset: 'assets/record_step_2.mp4',
+          pageNumber: 6,
+        ),
+        RiveStep2Slide(pageNumber: 7),
+        BetclicVideoSlide(
+          route: '/rive-step-3-video',
+          title: 'Rive 3 — Customization',
+          subtitle: 'How the designer built it in the Rive editor.',
+          asset: 'assets/record_step_3.mp4',
+          pageNumber: 8,
+        ),
+        RiveStep3Slide(pageNumber: 9),
         BetclicStatementSlide(
           route: '/statement',
           title: 'Key takeaway',
-          pageNumber: 5,
+          pageNumber: 10,
           spans: const [
             BetclicSpan.plain('Rive lets design and engineering share '),
             BetclicSpan.red('one source of truth'),

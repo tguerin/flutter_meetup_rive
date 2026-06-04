@@ -27,7 +27,7 @@ class _MinigameWidgetState extends State<MinigameWidget> {
     super.initState();
     _fileLoader = rive.FileLoader.fromAsset(
       'assets/demo_flutter_minigame.riv',
-      riveFactory: rive.Factory.flutter,
+      riveFactory: rive.Factory.rive,
     );
   }
 

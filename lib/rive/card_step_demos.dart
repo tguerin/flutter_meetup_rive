@@ -1,0 +1,771 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:rive/rive.dart' as rive;
+
+import '../slides/betclic/betclic_brand.dart';
+import 'card_step_2_viewmodel.rive.dart' as step2;
+import 'card_step_3_viewmodel.rive.dart' as step3;
+
+/// A soft neutral backdrop so the (white) Rive card stays visible against the
+/// white slide. Deliberately *not* a card itself — the card chrome comes from
+/// Rive; this only provides contrast and room for the animation.
+class _CardStage extends StatelessWidget {
+  const _CardStage({
+    required this.child,
+    this.width = 380,
+    this.height = 460,
+    this.padding = 36,
+  });
+
+  final Widget child;
+  final double width;
+  final double height;
+  final double padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      padding: EdgeInsets.all(padding),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF1F2F5), Color(0xFFE7E9EE)],
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Small brand-styled two-option toggle (used to switch artboard in step 1).
+class _SegmentToggle extends StatelessWidget {
+  const _SegmentToggle({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<({String value, String label})> options;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F2F4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BetclicBrand.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final o in options)
+            GestureDetector(
+              onTap: () => onChanged(o.value),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: o.value == selected
+                      ? BetclicBrand.red
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Text(
+                  o.label,
+                  style: TextStyle(
+                    fontFamily: BetclicBrand.fontFamily,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: o.value == selected
+                        ? Colors.white
+                        : BetclicBrand.muted,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Step 1 — just two artboards (BackCard / FrontCard). No state machine, no
+/// view model: the toggle picks which artboard to render, showing how the
+/// same file exposes several artboards we can switch between.
+class CardStep1Demo extends StatefulWidget {
+  const CardStep1Demo({super.key});
+
+  @override
+  State<CardStep1Demo> createState() => _CardStep1DemoState();
+}
+
+class _CardStep1DemoState extends State<CardStep1Demo> {
+  late final rive.FileLoader _fileLoader = rive.FileLoader.fromAsset(
+    'assets/card_step_1.riv',
+    riveFactory: rive.Factory.rive,
+  );
+
+  // The two artboards baked into card_step_1.riv.
+  String _artboard = 'FrontCard';
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _SegmentToggle(
+          options: const [
+            (value: 'FrontCard', label: 'Front'),
+            (value: 'BackCard', label: 'Back'),
+          ],
+          selected: _artboard,
+          onChanged: (v) => setState(() => _artboard = v),
+        ),
+        const SizedBox(height: 28),
+        _CardStage(
+          child: rive.RiveWidgetBuilder(
+            // Re-key on the artboard name so switching reloads the widget
+            // onto the newly selected artboard.
+            key: ValueKey(_artboard),
+            fileLoader: _fileLoader,
+            artboardSelector: rive.ArtboardSelector.byName(_artboard),
+            builder: (context, state) => switch (state) {
+              rive.RiveLoaded() => rive.RiveWidget(
+                controller: state.controller,
+                fit: rive.Fit.contain,
+              ),
+              rive.RiveLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              rive.RiveFailed(:final error) => Center(
+                child: Text('Failed to load Rive: $error'),
+              ),
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Step 2 — Card artboard + SmCard state machine + a VmCard view model. We
+/// fire `triggerFlip()` from Dart on a small interval so the audience sees
+/// the binding driving the animation.
+class CardStep2Demo extends StatefulWidget {
+  const CardStep2Demo({super.key});
+
+  @override
+  State<CardStep2Demo> createState() => _CardStep2DemoState();
+}
+
+class _CardStep2DemoState extends State<CardStep2Demo> {
+  late final rive.FileLoader _fileLoader = rive.FileLoader.fromAsset(
+    'assets/card_step_2.riv',
+    riveFactory: rive.Factory.rive,
+  );
+
+  step2.VmCardViewModel? _vm;
+
+  @override
+  void dispose() {
+    _vm?.dispose();
+    super.dispose();
+  }
+
+  void _onLoaded(rive.RiveLoaded state) {
+    final vmi = state.file
+        .defaultArtboardViewModel(state.controller.artboard)
+        ?.createDefaultInstance();
+    if (vmi == null) return;
+    final vm = step2.VmCardViewModel.fromViewModel(vmi);
+    vm.bind(state.controller.stateMachine);
+    _vm = vm;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        rive.RiveWidgetBuilder(
+          fileLoader: _fileLoader,
+          artboardSelector: rive.ArtboardSelector.byName(
+            step2.CardStep2Artboard.card.name,
+          ),
+          stateMachineSelector: rive.StateMachineSelector.byName(
+            step2.CardStep2Artboard.card.SmCard.name,
+          ),
+          onLoaded: _onLoaded,
+          builder: (context, state) => switch (state) {
+            rive.RiveLoaded() => _CardStage(
+              child: rive.RiveWidget(
+                controller: state.controller,
+                fit: rive.Fit.contain,
+              ),
+            ),
+            rive.RiveLoading() => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            rive.RiveFailed(:final error) => Center(
+              child: Text('Failed to load Rive: $error'),
+            ),
+          },
+        ),
+        const SizedBox(height: 28),
+        _FlipButton(onPressed: () => _vm?.triggerFlip()),
+      ],
+    );
+  }
+}
+
+/// A brand-styled "Flip card" action used to drive `triggerFlip()` from Dart.
+class _FlipButton extends StatelessWidget {
+  const _FlipButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.flip_camera_android, size: 20),
+      label: const Text('Flip card'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: BetclicBrand.red,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        textStyle: const TextStyle(
+          fontFamily: BetclicBrand.fontFamily,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        elevation: 0,
+      ),
+    );
+  }
+}
+
+/// Step 3 — same Card artboard, but the back & front now have their own view
+/// models. A small HUD drives the look & feel live: back colour, a bound
+/// image, the card value & suit, and a flip — all from typed Dart bindings.
+class CardStep3Demo extends StatefulWidget {
+  const CardStep3Demo({super.key});
+
+  @override
+  State<CardStep3Demo> createState() => _CardStep3DemoState();
+}
+
+class _CardStep3DemoState extends State<CardStep3Demo> {
+  late final rive.FileLoader _fileLoader = rive.FileLoader.fromAsset(
+    'assets/card_step_3.riv',
+    riveFactory: rive.Factory.rive,
+  );
+
+  step3.VmCardViewModel? _vm;
+
+  @override
+  void dispose() {
+    _vm?.dispose();
+    super.dispose();
+  }
+
+  void _onLoaded(rive.RiveLoaded state) {
+    final vmi = state.file
+        .defaultArtboardViewModel(state.controller.artboard)
+        ?.createDefaultInstance();
+    if (vmi == null) return;
+    final vm = step3.VmCardViewModel.fromViewModel(vmi);
+    vm.bind(state.controller.stateMachine);
+    vm.propertyOfVmBackCard
+      ..colorBg = BetclicBrand.red
+      ..hasCustomBg = false;
+    vm.propertyOfVmFrontCard
+      ..valueCard = 'A'
+      ..cardSymbol = step3.CardSymbol.heart;
+    setState(() => _vm = vm);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _CardStage(
+          width: 300,
+          height: 414,
+          padding: 16,
+          child: rive.RiveWidgetBuilder(
+            fileLoader: _fileLoader,
+            artboardSelector: rive.ArtboardSelector.byName(
+              step3.CardStep3Artboard.card.name,
+            ),
+            stateMachineSelector: rive.StateMachineSelector.byName(
+              step3.CardStep3Artboard.card.SmCard.name,
+            ),
+            onLoaded: _onLoaded,
+            builder: (context, state) => switch (state) {
+              rive.RiveLoaded() => rive.RiveWidget(
+                controller: state.controller,
+                fit: rive.Fit.contain,
+              ),
+              rive.RiveLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              rive.RiveFailed(:final error) => Center(
+                child: Text('Failed to load Rive: $error'),
+              ),
+            },
+          ),
+        ),
+        const SizedBox(width: 24),
+        Flexible(
+          child: _vm == null
+              ? const SizedBox.shrink()
+              : _CardStep3Hud(vm: _vm!),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact look-and-feel HUD for step 3 — back colour, bound image, card
+/// value & suit, and a flip. Styled to sit naturally on the white slide.
+class _CardStep3Hud extends StatelessWidget {
+  const _CardStep3Hud({required this.vm});
+
+  final step3.VmCardViewModel vm;
+
+  static const _swatches = <Color>[
+    BetclicBrand.red,
+    Color(0xFF0E2841),
+    BetclicBrand.yellow,
+    Color(0xFF34AE7D),
+    Color(0xFF009EE2),
+    Color(0xFF8E24AA),
+  ];
+
+  static const _values = ['A', 'K', 'Q', 'J', '10', '7'];
+
+  @override
+  Widget build(BuildContext context) {
+    final back = vm.propertyOfVmBackCard;
+    final front = vm.propertyOfVmFrontCard;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: BetclicBrand.border, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _HudLabel('Back color'),
+          StreamBuilder<Color>(
+            stream: back.colorBgStream,
+            initialData: back.colorBg,
+            builder: (context, snap) {
+              final current = snap.data ?? back.colorBg;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final c in _swatches)
+                    _Swatch(
+                      color: c,
+                      selected: current.toARGB32() == c.toARGB32(),
+                      onTap: () => back
+                        ..resetAssetBg()
+                        ..hasCustomBg = false
+                        ..colorBg = c,
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          const _HudLabel('Bound image'),
+          _ImageBinder(back: back),
+          const SizedBox(height: 16),
+          const _HudLabel('Value'),
+          StreamBuilder<String>(
+            stream: front.valueCardStream,
+            initialData: front.valueCard,
+            builder: (context, snap) {
+              final current = snap.data ?? front.valueCard;
+              return Wrap(
+                spacing: 6,
+                children: [
+                  for (final v in _values)
+                    _PillChip(
+                      label: v,
+                      selected: current == v,
+                      onTap: () => front.valueCard = v,
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          const _HudLabel('Suit'),
+          StreamBuilder<step3.CardSymbol>(
+            stream: front.cardSymbolStream,
+            initialData: front.cardSymbol,
+            builder: (context, snap) {
+              final current = snap.data ?? front.cardSymbol;
+              return Wrap(
+                spacing: 6,
+                children: [
+                  for (final s in step3.CardSymbol.values)
+                    _PillChip(
+                      label: _glyph(s),
+                      selected: current == s,
+                      onTap: () => front.cardSymbol = s,
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          _FlipButton(onPressed: vm.triggerFlip),
+        ],
+      ),
+    );
+  }
+
+  static String _glyph(step3.CardSymbol s) => switch (s) {
+    step3.CardSymbol.heart => '♥',
+    step3.CardSymbol.diamond => '♦',
+    step3.CardSymbol.spade => '♠',
+    step3.CardSymbol.club => '♣',
+  };
+}
+
+/// Small caps section label in brand red.
+class _HudLabel extends StatelessWidget {
+  const _HudLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: BetclicBrand.fontFamily,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.4,
+          color: BetclicBrand.red,
+        ),
+      ),
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? BetclicBrand.ink : Colors.transparent,
+            width: 3,
+          ),
+        ),
+        child: selected
+            ? const Icon(Icons.check, size: 15, color: Colors.white)
+            : null,
+      ),
+    );
+  }
+}
+
+class _PillChip extends StatelessWidget {
+  const _PillChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? BetclicBrand.red : const Color(0xFFF1F2F4),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? BetclicBrand.red : BetclicBrand.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: BetclicBrand.fontFamily,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : BetclicBrand.ink,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Image-binding row: a couple of generated logos + a reset, each bound into
+/// the back-card asset slot through the back view model.
+class _ImageBinder extends StatefulWidget {
+  const _ImageBinder({required this.back});
+
+  final step3.PropertyOfVmBackCard back;
+
+  @override
+  State<_ImageBinder> createState() => _ImageBinderState();
+}
+
+class _ImageBinderState extends State<_ImageBinder> {
+  static const _logos = <({String label, String letter, Color a, Color b})>[
+    (label: 'Flutter', letter: 'F', a: Color(0xFF42A5F5), b: Color(0xFF0D47A1)),
+    (label: 'Dart', letter: 'D', a: Color(0xFF26C6DA), b: Color(0xFF006064)),
+    (label: 'Rive', letter: 'R', a: Color(0xFFEC407A), b: Color(0xFF880E4F)),
+  ];
+
+  // Decode each logo once into a RenderImage and keep it alive for the
+  // lifetime of the widget. Assigning a freshly-decoded image and disposing
+  // it straight away (as updateAssetBgFromImage does) frees it under the
+  // native Rive renderer, so switching between bound images wouldn't stick.
+  final List<rive.RenderImage?> _images = List<rive.RenderImage?>.filled(
+    _logos.length,
+    null,
+  );
+  int? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _decodeAll();
+  }
+
+  @override
+  void dispose() {
+    for (final img in _images) {
+      img?.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _decodeAll() async {
+    for (var i = 0; i < _logos.length; i++) {
+      final image = await _decodeLogo(_logos[i]);
+      if (image == null) continue;
+      if (!mounted) {
+        image.dispose();
+        return;
+      }
+      setState(() => _images[i] = image);
+    }
+  }
+
+  static Future<rive.RenderImage?> _decodeLogo(
+    ({String label, String letter, Color a, Color b}) preset,
+  ) async {
+    const size = 512.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
+    const rect = Rect.fromLTWH(0, 0, size, size);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = ui.Gradient.linear(rect.topLeft, rect.bottomRight, [
+          preset.a,
+          preset.b,
+        ]),
+    );
+    final paragraph =
+        (ui.ParagraphBuilder(
+                ui.ParagraphStyle(
+                  textAlign: TextAlign.center,
+                  fontSize: size * 0.55,
+                  fontWeight: FontWeight.w800,
+                ),
+              )
+              ..pushStyle(ui.TextStyle(color: Colors.white))
+              ..addText(preset.letter))
+            .build()
+          ..layout(const ui.ParagraphConstraints(width: size));
+    canvas.drawParagraph(paragraph, Offset(0, size / 2 - paragraph.height / 2));
+    final picture = recorder.endRecording();
+    ui.Image image;
+    try {
+      image = await picture.toImage(size.toInt(), size.toInt());
+    } finally {
+      picture.dispose();
+    }
+    try {
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) return null;
+      return rive.Factory.rive.decodeImage(bytes.buffer.asUint8List());
+    } finally {
+      image.dispose();
+    }
+  }
+
+  void _apply(int index) {
+    final image = _images[index];
+    if (image == null) return;
+    setState(() => _selected = index);
+    widget.back
+      ..hasCustomBg = true
+      ..updateAssetBg(image);
+  }
+
+  void _reset() {
+    setState(() => _selected = null);
+    widget.back
+      ..resetAssetBg()
+      ..hasCustomBg = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        for (var i = 0; i < _logos.length; i++)
+          _ImageTile(
+            letter: _logos[i].letter,
+            a: _logos[i].a,
+            b: _logos[i].b,
+            selected: _selected == i,
+            onTap: () => _apply(i),
+          ),
+        _ResetTile(onTap: _reset),
+      ],
+    );
+  }
+}
+
+class _ImageTile extends StatelessWidget {
+  const _ImageTile({
+    required this.letter,
+    required this.a,
+    required this.b,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String letter;
+  final Color a;
+  final Color b;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [a, b],
+          ),
+          border: Border.all(
+            color: selected ? BetclicBrand.ink : Colors.transparent,
+            width: 2.5,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          letter,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResetTile extends StatelessWidget {
+  const _ResetTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFFF1F2F4),
+          border: Border.all(color: BetclicBrand.border),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(Icons.restart_alt, size: 22, color: BetclicBrand.ink),
+      ),
+    );
+  }
+}

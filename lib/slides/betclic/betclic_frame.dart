@@ -12,13 +12,13 @@ class BetclicFrame extends StatelessWidget {
     super.key,
     this.title,
     this.pageNumber,
-    this.footer = 'CONFIDENTIAL DOCUMENT',
+    this.footer,
     required this.child,
   });
 
   final String? title;
   final int? pageNumber;
-  final String footer;
+  final String? footer;
   final Widget child;
 
   @override
@@ -70,9 +70,9 @@ class BetclicFrame extends StatelessWidget {
 }
 
 class _FooterBar extends StatelessWidget {
-  const _FooterBar({required this.footer, this.pageNumber});
+  const _FooterBar({this.footer, this.pageNumber});
 
-  final String footer;
+  final String? footer;
   final int? pageNumber;
 
   @override
@@ -80,15 +80,16 @@ class _FooterBar extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          footer,
-          style: const TextStyle(
-            fontFamily: BetclicBrand.fontFamily,
-            fontSize: 11,
-            letterSpacing: 1.5,
-            color: BetclicBrand.muted,
+        if (footer != null)
+          Text(
+            footer!,
+            style: const TextStyle(
+              fontFamily: BetclicBrand.fontFamily,
+              fontSize: 11,
+              letterSpacing: 1.5,
+              color: BetclicBrand.muted,
+            ),
           ),
-        ),
         const Spacer(),
         if (pageNumber != null)
           Padding(

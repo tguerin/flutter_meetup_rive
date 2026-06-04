@@ -14,6 +14,7 @@ dependencies:
   rive_viewmodel: ^1.0.0
   flutter_deck: ^0.28.1
   qr_flutter: ^4.1.0
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +24,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/prez_rive.riv
     - assets/demo_flutter_minigame.riv
+    - assets/card_step_1.riv
+    - assets/card_step_2.riv
+    - assets/card_step_3.riv
+    - assets/record_step_1.mp4
+    - assets/record_step_2.mp4
+    - assets/record_step_3.mp4
     - assets/betclic_logo.png
