@@ -27,6 +27,39 @@ abstract final class BetclicBrand {
   );
 }
 
+/// Full-slide background PNGs exported from the Betclic PowerPoint master.
+abstract final class BetclicBg {
+  static const cover = 'assets/branding/bg_cover_logo.png'; // logo centered
+  static const welcome = 'assets/branding/bg_welcome.png'; // "WELCOME"
+  static const section = 'assets/branding/bg_section.png'; // dark parts
+  static const content = 'assets/branding/bg_content.png'; // light content
+  static const qa = 'assets/branding/bg_qa.png'; // "Q&A" + mic
+  static const thanks = 'assets/branding/bg_thanks.png'; // "THANK YOU"
+}
+
+/// Lays a full-bleed Betclic [asset] background under [child].
+class BetclicBackground extends StatelessWidget {
+  const BetclicBackground({
+    super.key,
+    required this.asset,
+    required this.child,
+  });
+
+  final String asset;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(asset, fit: BoxFit.cover),
+        child,
+      ],
+    );
+  }
+}
+
 /// One styled fragment used to build the template's mixed red/black headlines.
 class BetclicSpan {
   const BetclicSpan(this.text, {this.color, this.highlight, this.bold = false});

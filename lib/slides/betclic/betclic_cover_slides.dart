@@ -3,55 +3,20 @@ import 'package:flutter_deck/flutter_deck.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'betclic_brand.dart';
-import 'betclic_frame.dart';
 
-/// Shared dark navy backdrop used by the cover / closing slides, with the
-/// Betclic logo tucked into the bottom-right corner.
-class _CoverScaffold extends StatelessWidget {
-  const _CoverScaffold({required this.child, this.footer});
-
-  final Widget child;
-  final String? footer;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(gradient: BetclicBrand.coverGradient),
-      child: Stack(
-        children: [
-          Positioned.fill(child: Center(child: child)),
-          if (footer != null)
-            Positioned(
-              left: 56,
-              bottom: 40,
-              child: Text(
-                footer!,
-                style: const TextStyle(
-                  fontFamily: BetclicBrand.fontFamily,
-                  fontSize: 11,
-                  letterSpacing: 1.5,
-                  color: Colors.white54,
-                ),
-              ),
-            ),
-          const Positioned(right: 56, bottom: 36, child: BetclicLogo(height: 30)),
-        ],
-      ),
-    );
-  }
-}
-
-/// Opening slide — dark cover with the centered logo, title and date.
-class BetclicWelcomeSlide extends FlutterDeckSlideWidget {
-  const BetclicWelcomeSlide({
+/// Opening cover — the Betclic logo backdrop (slide 1) with the talk title,
+/// subtitle and date overlaid in the lower third (the logo is baked into the
+/// background art).
+class BetclicCoverSlide extends FlutterDeckSlideWidget {
+  const BetclicCoverSlide({
     super.key,
     required this.title,
     required this.subtitle,
     required this.date,
   }) : super(
          configuration: const FlutterDeckSlideConfiguration(
-           route: '/welcome',
-           title: 'Welcome',
+           route: '/cover',
+           title: 'Cover',
          ),
        );
 
@@ -62,32 +27,54 @@ class BetclicWelcomeSlide extends FlutterDeckSlideWidget {
   @override
   FlutterDeckSlide build(BuildContext context) {
     return FlutterDeckSlide.blank(
-      builder: (_) => _CoverScaffold(
-        footer: date,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (_) => BetclicBackground(
+        asset: BetclicBg.cover,
+        child: Stack(
           children: [
-            const BetclicLogo(height: 96),
-            const SizedBox(height: 48),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: BetclicBrand.fontFamily,
-                fontSize: 64,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                height: 1.0,
+            Align(
+              alignment: const Alignment(0, 0.18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: BetclicBrand.fontFamily,
+                      fontSize: 72,
+                      fontWeight: FontWeight.w800,
+                      height: 1.02,
+                      letterSpacing: -0.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: BetclicBrand.fontFamily,
+                      fontSize: 26,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: BetclicBrand.fontFamily,
-                fontSize: 24,
-                color: Colors.white70,
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 36,
+              child: Center(
+                child: Text(
+                  date,
+                  style: const TextStyle(
+                    fontFamily: BetclicBrand.fontFamily,
+                    fontSize: 14,
+                    letterSpacing: 1.5,
+                    color: BetclicBrand.yellow,
+                  ),
+                ),
               ),
             ),
           ],
@@ -97,9 +84,28 @@ class BetclicWelcomeSlide extends FlutterDeckSlideWidget {
   }
 }
 
-/// Q&A slide — dark cover with a large "Q&A" lockup.
+/// Welcome slide — the branded "WELCOME" art (slide 2), used as-is.
+class BetclicWelcomeSlide extends FlutterDeckSlideWidget {
+  const BetclicWelcomeSlide({super.key})
+    : super(
+        configuration: const FlutterDeckSlideConfiguration(
+          route: '/welcome',
+          title: 'Welcome',
+        ),
+      );
+
+  @override
+  FlutterDeckSlide build(BuildContext context) {
+    return FlutterDeckSlide.blank(
+      builder: (_) =>
+          const BetclicBackground(asset: BetclicBg.welcome, child: SizedBox()),
+    );
+  }
+}
+
+/// Q&A slide — the branded "Q&A" art (slide 7), used as-is.
 class BetclicQaSlide extends FlutterDeckSlideWidget {
-  const BetclicQaSlide({super.key, this.prompt = 'Ask us anything'})
+  const BetclicQaSlide({super.key})
     : super(
         configuration: const FlutterDeckSlideConfiguration(
           route: '/qa',
@@ -107,48 +113,18 @@ class BetclicQaSlide extends FlutterDeckSlideWidget {
         ),
       );
 
-  final String prompt;
-
   @override
   FlutterDeckSlide build(BuildContext context) {
     return FlutterDeckSlide.blank(
-      builder: (_) => _CoverScaffold(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RichText(
-              text: const TextSpan(
-                style: TextStyle(
-                  fontFamily: BetclicBrand.fontFamily,
-                  fontSize: 132,
-                  fontWeight: FontWeight.w800,
-                  height: 1.0,
-                ),
-                children: [
-                  TextSpan(text: 'Q', style: TextStyle(color: Colors.white)),
-                  TextSpan(text: '&', style: TextStyle(color: BetclicBrand.red)),
-                  TextSpan(text: 'A', style: TextStyle(color: Colors.white)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              prompt,
-              style: const TextStyle(
-                fontFamily: BetclicBrand.fontFamily,
-                fontSize: 26,
-                color: Colors.white70,
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) =>
+          const BetclicBackground(asset: BetclicBg.qa, child: SizedBox()),
     );
   }
 }
 
-/// Closing slide — dark cover with a large "Thank you" and (optionally) a
-/// QR code + URL for the audience to play the mini-game on their phones.
+/// Closing slide — the branded "THANK YOU" art (slide 8). The big wordmark is
+/// baked into the background, so we only overlay the play-it-yourself QR on
+/// the right (where the art leaves room).
 class BetclicThankYouSlide extends FlutterDeckSlideWidget {
   const BetclicThankYouSlide({super.key, this.subtitle, this.playUrl})
     : super(
@@ -164,67 +140,30 @@ class BetclicThankYouSlide extends FlutterDeckSlideWidget {
   @override
   FlutterDeckSlide build(BuildContext context) {
     return FlutterDeckSlide.blank(
-      builder: (_) => _CoverScaffold(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontFamily: BetclicBrand.fontFamily,
-                      fontSize: 96,
-                      fontWeight: FontWeight.w800,
-                      height: 1.0,
-                      color: Colors.white,
-                    ),
-                    children: [
-                      TextSpan(text: 'Thank '),
-                      TextSpan(
-                        text: 'you',
-                        style: TextStyle(color: BetclicBrand.red),
-                      ),
-                    ],
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 20),
-                  Text(
-                    subtitle!,
-                    style: const TextStyle(
-                      fontFamily: BetclicBrand.fontFamily,
-                      fontSize: 22,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            if (playUrl != null) ...[
-              const SizedBox(width: 80),
-              _PlayQrCallout(url: playUrl!),
-            ],
-          ],
-        ),
+      builder: (_) => BetclicBackground(
+        asset: BetclicBg.thanks,
+        child: playUrl == null
+            ? const SizedBox()
+            : Align(
+                alignment: const Alignment(0.82, 0),
+                child: _PlayQrCallout(url: playUrl!, subtitle: subtitle),
+              ),
       ),
     );
   }
 }
 
 class _PlayQrCallout extends StatelessWidget {
-  const _PlayQrCallout({required this.url});
+  const _PlayQrCallout({required this.url, this.subtitle});
 
   final String url;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
           '↳ Play it yourself',
@@ -232,7 +171,7 @@ class _PlayQrCallout extends StatelessWidget {
             fontFamily: BetclicBrand.fontFamily,
             fontSize: 16,
             letterSpacing: 1.5,
-            color: Colors.white70,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 12),
@@ -244,7 +183,7 @@ class _PlayQrCallout extends StatelessWidget {
           ),
           child: QrImageView(
             data: url,
-            size: 220,
+            size: 200,
             backgroundColor: Colors.white,
             eyeStyle: const QrEyeStyle(
               eyeShape: QrEyeShape.square,
@@ -256,16 +195,19 @@ class _PlayQrCallout extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        SelectableText(
-          url,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 16,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+        if (subtitle != null) ...[
+          const SizedBox(height: 14),
+          Text(
+            subtitle!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: BetclicBrand.fontFamily,
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

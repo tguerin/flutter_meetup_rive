@@ -16,7 +16,18 @@ mise install            # one-time — installs Flutter 3.41.9 per mise.toml
 flutter pub get
 flutter run -d chrome                          # the slide deck (default)
 flutter run -d chrome -t lib/main_game.dart    # the standalone mini-game
+
+# Native macOS deck — the designer recordings are embedded in the app bundle
+# (they play instantly, offline). The `desktop` flavor is REQUIRED: it's what
+# bundles the `assets/record_step_*.mp4` videos (flavor-conditional assets).
+flutter run -d macos --flavor desktop -t lib/main.dart
 ```
+
+> The mp4 recordings are tagged with the `desktop` flavor in `pubspec.yaml`, so
+> they are **only** bundled in the macOS build. The web builds (no flavor) omit
+> them — keeping the GitHub Pages deploy light — and the video slides show a
+> "shown live in the desktop build" placeholder there. Running macOS **without**
+> `--flavor desktop` builds the deck but leaves the videos out.
 
 ## Deploy to GitHub Pages
 

@@ -113,16 +113,60 @@ class CardStep1Demo extends StatefulWidget {
 }
 
 class _CardStep1DemoState extends State<CardStep1Demo> {
-  late final rive.FileLoader _fileLoader = rive.FileLoader.fromAsset(
-    'assets/card_step_1.riv',
-    riveFactory: rive.Factory.rive,
-  );
-
   // The two artboards baked into card_step_1.riv.
   String _artboard = 'FrontCard';
 
+  // The file is loaded once; switching artboards just rebuilds a controller
+  // off the same loaded file — no asset reload.
+  rive.File? _file;
+  rive.RiveWidgetController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final file = await rive.File.asset(
+      'assets/card_step_1.riv',
+      riveFactory: rive.Factory.rive,
+    );
+    if (file == null || !mounted) {
+      file?.dispose();
+      return;
+    }
+    _file = file;
+    setState(() => _controller = _controllerFor(_artboard));
+  }
+
+  rive.RiveWidgetController _controllerFor(String artboard) {
+    return rive.RiveWidgetController(
+      _file!,
+      artboardSelector: rive.ArtboardSelector.byName(artboard),
+    );
+  }
+
+  void _select(String artboard) {
+    if (artboard == _artboard || _file == null) return;
+    final old = _controller;
+    setState(() {
+      _artboard = artboard;
+      _controller = _controllerFor(artboard);
+    });
+    old?.dispose();
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    _file?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final controller = _controller;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -132,29 +176,19 @@ class _CardStep1DemoState extends State<CardStep1Demo> {
             (value: 'BackCard', label: 'Back'),
           ],
           selected: _artboard,
-          onChanged: (v) => setState(() => _artboard = v),
+          onChanged: _select,
         ),
         const SizedBox(height: 28),
         _CardStage(
-          child: rive.RiveWidgetBuilder(
-            // Re-key on the artboard name so switching reloads the widget
-            // onto the newly selected artboard.
-            key: ValueKey(_artboard),
-            fileLoader: _fileLoader,
-            artboardSelector: rive.ArtboardSelector.byName(_artboard),
-            builder: (context, state) => switch (state) {
-              rive.RiveLoaded() => rive.RiveWidget(
-                controller: state.controller,
-                fit: rive.Fit.contain,
-              ),
-              rive.RiveLoading() => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              rive.RiveFailed(:final error) => Center(
-                child: Text('Failed to load Rive: $error'),
-              ),
-            },
-          ),
+          child: controller == null
+              ? const Center(child: CircularProgressIndicator())
+              : rive.RiveWidget(
+                  // New controller per artboard → swaps without reloading
+                  // the file.
+                  key: ValueKey(_artboard),
+                  controller: controller,
+                  fit: rive.Fit.contain,
+                ),
         ),
       ],
     );

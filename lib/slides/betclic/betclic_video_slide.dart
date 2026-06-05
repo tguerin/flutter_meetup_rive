@@ -69,6 +69,8 @@ class _VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends State<_VideoPlayer> {
   late final VideoPlayerController _controller;
   bool _ready = false;
+  bool _failed = false;
+  bool _paused = false;
 
   @override
   void initState() {
@@ -76,11 +78,20 @@ class _VideoPlayerState extends State<_VideoPlayer> {
     _controller = VideoPlayerController.asset(widget.asset)
       ..setLooping(true)
       ..setVolume(0);
-    _controller.initialize().then((_) {
-      if (!mounted) return;
-      setState(() => _ready = true);
-      _controller.play();
-    });
+    // The recordings are bundled only in the macOS `desktop` flavor (see
+    // pubspec.yaml), so on web the asset is absent and init throws — fall back
+    // to a static placeholder instead of spinning forever.
+    _controller
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          setState(() => _ready = true);
+          _controller.play();
+        })
+        .catchError((_) {
+          if (!mounted) return;
+          setState(() => _failed = true);
+        });
   }
 
   @override
@@ -91,12 +102,21 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   void _toggle() {
     setState(() {
-      _controller.value.isPlaying ? _controller.pause() : _controller.play();
+      if (_paused) {
+        _controller.play();
+        _paused = false;
+      } else {
+        _controller.pause();
+        _paused = true;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_failed) {
+      return const _VideoUnavailable();
+    }
     if (!_ready) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -122,7 +142,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
                 alignment: Alignment.center,
                 children: [
                   VideoPlayer(_controller),
-                  if (!_controller.value.isPlaying)
+                  if (_paused)
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -139,6 +159,54 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown when the recording isn't bundled (e.g. the web build, where the
+/// videos are excluded to keep the deploy light). The clip plays in the
+/// native macOS `desktop` build.
+class _VideoUnavailable extends StatelessWidget {
+  const _VideoUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F2F5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: BetclicBrand.border, width: 1.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: BetclicBrand.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Screen recording — shown live in the desktop build',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: BetclicBrand.fontFamily,
+                fontSize: 15,
+                color: BetclicBrand.muted,
+              ),
+            ),
+          ],
         ),
       ),
     );

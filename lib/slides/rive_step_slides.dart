@@ -58,22 +58,26 @@ class RiveStep3Slide extends BetclicCodeSlide {
 }
 
 const String _step1Code = '''
-// One file, two artboards — switch between them by name.
-// No state machine, no view model yet.
-String artboard = 'FrontCard'; // or 'BackCard'
-
-RiveWidgetBuilder(
-  fileLoader: FileLoader.fromAsset('assets/card_step_1.riv'),
-  artboardSelector: ArtboardSelector.byName(artboard),
-  builder: (context, state) => switch (state) {
-    RiveLoaded() => RiveWidget(
-      controller: state.controller,
-      fit: Fit.contain,
-    ),
-    RiveLoading() => const CircularProgressIndicator(),
-    RiveFailed() => const Text('Could not load card'),
-  },
+// Load the file once — it holds every artboard.
+final file = await File.asset(
+  'assets/card_step_1.riv',
+  riveFactory: Factory.rive,
 );
+
+// A controller is pinned to one artboard, so to switch we build a new
+// one off the same file (no reload) and swap it into the RiveWidget.
+RiveWidgetController controllerFor(String artboard) => RiveWidgetController(
+  file,
+  artboardSelector: ArtboardSelector.byName(artboard), // 'FrontCard' / 'BackCard'
+);
+
+void showArtboard(String name) {
+  final old = controller;
+  setState(() => controller = controllerFor(name));
+  old.dispose();
+}
+
+RiveWidget(controller: controller);
 ''';
 
 const String _step2Code = '''

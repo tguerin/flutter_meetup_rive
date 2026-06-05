@@ -23,47 +23,32 @@ class BetclicFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: BetclicBrand.surface,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(color: BetclicBrand.border, width: 1.5),
+    return BetclicBackground(
+      asset: BetclicBg.content,
+      child: Padding(
+        // Extra right gap clears the baked-in vertical Betclic tab on the bg.
+        padding: const EdgeInsets.fromLTRB(56, 48, 80, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title != null) ...[
+              Text(
+                title!,
+                style: const TextStyle(
+                  fontFamily: BetclicBrand.fontFamily,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  color: BetclicBrand.red,
+                  height: 1.05,
                 ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(56, 48, 56, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (title != null) ...[
-                  Text(
-                    title!,
-                    style: const TextStyle(
-                      fontFamily: BetclicBrand.fontFamily,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      color: BetclicBrand.ink,
-                      height: 1.05,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(width: 64, height: 5, color: BetclicBrand.red),
-                  const SizedBox(height: 28),
-                ],
-                Expanded(child: child),
-                const SizedBox(height: 12),
-                _FooterBar(footer: footer, pageNumber: pageNumber),
-              ],
-            ),
-          ),
-        ],
+              const SizedBox(height: 28),
+            ],
+            Expanded(child: child),
+            const SizedBox(height: 12),
+            _FooterBar(footer: footer, pageNumber: pageNumber),
+          ],
+        ),
       ),
     );
   }
@@ -92,19 +77,15 @@ class _FooterBar extends StatelessWidget {
           ),
         const Spacer(),
         if (pageNumber != null)
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Text(
-              '$pageNumber',
-              style: const TextStyle(
-                fontFamily: BetclicBrand.fontFamily,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: BetclicBrand.ink,
-              ),
+          Text(
+            '$pageNumber',
+            style: const TextStyle(
+              fontFamily: BetclicBrand.fontFamily,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: BetclicBrand.red,
             ),
           ),
-        const BetclicLogo(height: 26),
       ],
     );
   }

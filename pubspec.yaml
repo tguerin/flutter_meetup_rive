@@ -28,7 +28,21 @@ flutter:
     - assets/card_step_1.riv
     - assets/card_step_2.riv
     - assets/card_step_3.riv
-    - assets/record_step_1.mp4
-    - assets/record_step_2.mp4
-    - assets/record_step_3.mp4
     - assets/betclic_logo.png
+    - assets/branding/bg_cover_logo.png
+    - assets/branding/bg_welcome.png
+    - assets/branding/bg_section.png
+    - assets/branding/bg_content.png
+    - assets/branding/bg_qa.png
+    - assets/branding/bg_thanks.png
+    - assets/rive_logo.png
+    - assets/rive_main_page.png
+    - assets/lottie_vs_rive.png
+    # Heavy designer recordings: bundled only in the macOS `desktop` flavor
+    # (flavor-conditional assets), so the web/GitHub Pages build stays light.
+    - path: assets/record_step_1.mp4
+      flavors: [desktop]
+    - path: assets/record_step_2.mp4
+      flavors: [desktop]
+    - path: assets/record_step_3.mp4
+      flavors: [desktop]

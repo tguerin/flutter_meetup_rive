@@ -6,6 +6,7 @@ import 'slides/betclic/betclic_brand.dart';
 import 'slides/betclic/betclic_content_slides.dart';
 import 'slides/betclic/betclic_cover_slides.dart';
 import 'slides/betclic/betclic_video_slide.dart';
+import 'slides/rive_intro_slides.dart';
 import 'slides/rive_step_slides.dart';
 
 Future<void> main() async {
@@ -36,55 +37,55 @@ class MeetupDeck extends StatelessWidget {
         ),
       ),
       slides: [
-        const BetclicWelcomeSlide(
+        const BetclicCoverSlide(
           title: 'Rive × Flutter',
-          subtitle: 'Bringing designer animations to life in Dart',
+          subtitle: 'Animate your apps like never before',
           date: '27/05/2026',
         ),
+        const BetclicWelcomeSlide(),
         BetclicBulletSlide(
           route: '/agenda',
           title: 'Agenda',
           pageNumber: 2,
           bullets: const [
             'What Rive is and why it fits Flutter',
+            'Rive vs Lottie',
             'State machines & data binding',
             'Strongly-typed View Models from Dart',
             'Live demo: the interactive card',
           ],
         ),
-        BetclicContentSlide(
-          route: '/content',
-          title: 'Your section title',
-          pageNumber: 3,
-        ),
+        WhatsRiveSlide(pageNumber: 3),
+        RiveVsLottieImageSlide(pageNumber: 4),
+        RiveVsLottieBulletsSlide(pageNumber: 5),
         BetclicVideoSlide(
           route: '/rive-step-1-video',
           title: 'Rive 1 — Design',
           subtitle: 'How the designer built it in the Rive editor.',
           asset: 'assets/record_step_1.mp4',
-          pageNumber: 4,
+          pageNumber: 6,
         ),
-        RiveStep1Slide(pageNumber: 5),
+        RiveStep1Slide(pageNumber: 7),
         BetclicVideoSlide(
           route: '/rive-step-2-video',
           title: 'Rive 2 — Animation & data binding',
           subtitle: 'How the designer built it in the Rive editor.',
           asset: 'assets/record_step_2.mp4',
-          pageNumber: 6,
+          pageNumber: 8,
         ),
-        RiveStep2Slide(pageNumber: 7),
+        RiveStep2Slide(pageNumber: 9),
         BetclicVideoSlide(
           route: '/rive-step-3-video',
           title: 'Rive 3 — Customization',
           subtitle: 'How the designer built it in the Rive editor.',
           asset: 'assets/record_step_3.mp4',
-          pageNumber: 8,
+          pageNumber: 10,
         ),
-        RiveStep3Slide(pageNumber: 9),
+        RiveStep3Slide(pageNumber: 11),
         BetclicStatementSlide(
           route: '/statement',
           title: 'Key takeaway',
-          pageNumber: 10,
+          pageNumber: 12,
           spans: const [
             BetclicSpan.plain('Rive lets design and engineering share '),
             BetclicSpan.red('one source of truth'),
