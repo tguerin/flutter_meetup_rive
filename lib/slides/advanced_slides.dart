@@ -20,38 +20,12 @@ class AssetStrategySlide extends FlutterDeckSlideWidget {
 
   @override
   FlutterDeckSlide build(BuildContext context) {
-    // Near full-bleed: the diagram carries its own headers, so we skip the
-    // frame title and minimise padding to give the image as much room as
-    // possible (right gap clears the bg's vertical Betclic tab).
     return FlutterDeckSlide.blank(
-      builder: (_) => BetclicBackground(
-        asset: BetclicBg.content,
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(36, 28, 64, 28),
-              child: Center(
-                child: Image.asset(
-                  'assets/asset_strategy.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            if (pageNumber != null)
-              Positioned(
-                right: 40,
-                bottom: 18,
-                child: Text(
-                  '$pageNumber',
-                  style: const TextStyle(
-                    fontFamily: BetclicBrand.fontFamily,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: BetclicBrand.red,
-                  ),
-                ),
-              ),
-          ],
+      builder: (_) => BetclicFrame(
+        title: 'Loading referenced assets',
+        pageNumber: pageNumber,
+        child: Center(
+          child: Image.asset('assets/asset_strategy.png', fit: BoxFit.contain),
         ),
       ),
     );
