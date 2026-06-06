@@ -14,23 +14,33 @@ class BetclicCodeSlide extends FlutterDeckSlideWidget {
     required String route,
     required this.title,
     required this.subtitle,
-    required this.code,
     required this.result,
+    String? code,
+    List<String>? codeSteps,
     this.codeLabel,
     this.pageNumber,
     this.codeFontSize = 16,
     this.codeFlex = 6,
     this.resultFlex = 5,
-  }) : super(
+  }) : assert(
+         code != null || codeSteps != null,
+         'Provide either `code` or `codeSteps`.',
+       ),
+       codes = codeSteps ?? [code!],
+       super(
          configuration: FlutterDeckSlideConfiguration(
            route: route,
            title: title,
+           steps: codeSteps?.length ?? 1,
          ),
        );
 
   final String title;
   final String subtitle;
-  final String code;
+
+  /// Code snippets shown in the left panel. With more than one, the panel
+  /// cross-fades to the next snippet each time the speaker advances a step.
+  final List<String> codes;
   final Widget result;
   final String? codeLabel;
   final int? pageNumber;
@@ -64,10 +74,19 @@ class BetclicCodeSlide extends FlutterDeckSlideWidget {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    CodePanel(
-                      code: code,
-                      label: codeLabel,
-                      fontSize: codeFontSize,
+                    FlutterDeckSlideStepsBuilder(
+                      builder: (context, step) {
+                        final idx = (step - 1).clamp(0, codes.length - 1);
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          child: CodePanel(
+                            key: ValueKey(idx),
+                            code: codes[idx],
+                            label: codeLabel,
+                            fontSize: codeFontSize,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

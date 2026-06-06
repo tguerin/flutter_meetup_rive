@@ -84,25 +84,6 @@ class BetclicCoverSlide extends FlutterDeckSlideWidget {
   }
 }
 
-/// Welcome slide — the branded "WELCOME" art (slide 2), used as-is.
-class BetclicWelcomeSlide extends FlutterDeckSlideWidget {
-  const BetclicWelcomeSlide({super.key})
-    : super(
-        configuration: const FlutterDeckSlideConfiguration(
-          route: '/welcome',
-          title: 'Welcome',
-        ),
-      );
-
-  @override
-  FlutterDeckSlide build(BuildContext context) {
-    return FlutterDeckSlide.blank(
-      builder: (_) =>
-          const BetclicBackground(asset: BetclicBg.welcome, child: SizedBox()),
-    );
-  }
-}
-
 /// Q&A slide — the branded "Q&A" art (slide 7), used as-is.
 class BetclicQaSlide extends FlutterDeckSlideWidget {
   const BetclicQaSlide({super.key})

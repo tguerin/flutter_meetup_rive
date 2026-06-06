@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' as rive;
 
 import '../slides/betclic/betclic_brand.dart';
-import 'card_step_2_viewmodel.rive.dart' as step2;
-import 'card_step_3_viewmodel.rive.dart' as step3;
+
+// Card artboards expose a "Card" artboard driven by the "SmCard" state machine
+// and a default view model. We talk to that view model through the plain Rive
+// data-binding API (vmi.trigger / .color / .string / .enumerator / .image /
+// .viewModel) — no generated, strongly-typed wrapper. A tool to generate typed
+// view models is shown in a later slide.
+const _cardArtboard = 'Card';
+const _cardStateMachine = 'SmCard';
 
 /// A soft neutral backdrop so the (white) Rive card stays visible against the
 /// white slide. Deliberately *not* a card itself — the card chrome comes from
@@ -211,11 +217,11 @@ class _CardStep2DemoState extends State<CardStep2Demo> {
     riveFactory: rive.Factory.rive,
   );
 
-  step2.VmCardViewModel? _vm;
+  rive.ViewModelInstance? _vmi;
 
   @override
   void dispose() {
-    _vm?.dispose();
+    _vmi?.dispose();
     super.dispose();
   }
 
@@ -224,9 +230,8 @@ class _CardStep2DemoState extends State<CardStep2Demo> {
         .defaultArtboardViewModel(state.controller.artboard)
         ?.createDefaultInstance();
     if (vmi == null) return;
-    final vm = step2.VmCardViewModel.fromViewModel(vmi);
-    vm.bind(state.controller.stateMachine);
-    _vm = vm;
+    state.controller.stateMachine.bindViewModelInstance(vmi);
+    _vmi = vmi;
   }
 
   @override
@@ -236,11 +241,9 @@ class _CardStep2DemoState extends State<CardStep2Demo> {
       children: [
         rive.RiveWidgetBuilder(
           fileLoader: _fileLoader,
-          artboardSelector: rive.ArtboardSelector.byName(
-            step2.CardStep2Artboard.card.name,
-          ),
+          artboardSelector: rive.ArtboardSelector.byName(_cardArtboard),
           stateMachineSelector: rive.StateMachineSelector.byName(
-            step2.CardStep2Artboard.card.SmCard.name,
+            _cardStateMachine,
           ),
           onLoaded: _onLoaded,
           builder: (context, state) => switch (state) {
@@ -259,7 +262,9 @@ class _CardStep2DemoState extends State<CardStep2Demo> {
           },
         ),
         const SizedBox(height: 28),
-        _FlipButton(onPressed: () => _vm?.triggerFlip()),
+        _FlipButton(
+          onPressed: () => _vmi?.trigger('triggerFlip')?.trigger(),
+        ),
       ],
     );
   }
@@ -312,11 +317,11 @@ class _CardStep3DemoState extends State<CardStep3Demo> {
     riveFactory: rive.Factory.rive,
   );
 
-  step3.VmCardViewModel? _vm;
+  rive.ViewModelInstance? _vmi;
 
   @override
   void dispose() {
-    _vm?.dispose();
+    _vmi?.dispose();
     super.dispose();
   }
 
@@ -325,15 +330,16 @@ class _CardStep3DemoState extends State<CardStep3Demo> {
         .defaultArtboardViewModel(state.controller.artboard)
         ?.createDefaultInstance();
     if (vmi == null) return;
-    final vm = step3.VmCardViewModel.fromViewModel(vmi);
-    vm.bind(state.controller.stateMachine);
-    vm.propertyOfVmBackCard
-      ..colorBg = BetclicBrand.red
-      ..hasCustomBg = false;
-    vm.propertyOfVmFrontCard
-      ..valueCard = 'A'
-      ..cardSymbol = step3.CardSymbol.heart;
-    setState(() => _vm = vm);
+    state.controller.stateMachine.bindViewModelInstance(vmi);
+
+    final back = vmi.viewModel('propertyOfVmBackCard');
+    back?.color('colorBg')?.value = BetclicBrand.red;
+    back?.boolean('hasCustomBg')?.value = false;
+    final front = vmi.viewModel('propertyOfVmFrontCard');
+    front?.string('valueCard')?.value = 'A';
+    front?.enumerator('cardSymbol')?.value = 'heart';
+
+    setState(() => _vmi = vmi);
   }
 
   @override
@@ -348,11 +354,9 @@ class _CardStep3DemoState extends State<CardStep3Demo> {
           padding: 16,
           child: rive.RiveWidgetBuilder(
             fileLoader: _fileLoader,
-            artboardSelector: rive.ArtboardSelector.byName(
-              step3.CardStep3Artboard.card.name,
-            ),
+            artboardSelector: rive.ArtboardSelector.byName(_cardArtboard),
             stateMachineSelector: rive.StateMachineSelector.byName(
-              step3.CardStep3Artboard.card.SmCard.name,
+              _cardStateMachine,
             ),
             onLoaded: _onLoaded,
             builder: (context, state) => switch (state) {
@@ -371,9 +375,9 @@ class _CardStep3DemoState extends State<CardStep3Demo> {
         ),
         const SizedBox(width: 24),
         Flexible(
-          child: _vm == null
+          child: _vmi == null
               ? const SizedBox.shrink()
-              : _CardStep3Hud(vm: _vm!),
+              : _CardStep3Hud(vm: _vmi!),
         ),
       ],
     );
@@ -381,12 +385,18 @@ class _CardStep3DemoState extends State<CardStep3Demo> {
 }
 
 /// Compact look-and-feel HUD for step 3 — back colour, bound image, card
-/// value & suit, and a flip. Styled to sit naturally on the white slide.
-class _CardStep3Hud extends StatelessWidget {
+/// value & suit, and a flip. Drives the bound view model through the plain
+/// Rive data-binding API; the HUD's own state tracks the current selection.
+class _CardStep3Hud extends StatefulWidget {
   const _CardStep3Hud({required this.vm});
 
-  final step3.VmCardViewModel vm;
+  final rive.ViewModelInstance vm;
 
+  @override
+  State<_CardStep3Hud> createState() => _CardStep3HudState();
+}
+
+class _CardStep3HudState extends State<_CardStep3Hud> {
   static const _swatches = <Color>[
     BetclicBrand.red,
     Color(0xFF0E2841),
@@ -398,11 +408,43 @@ class _CardStep3Hud extends StatelessWidget {
 
   static const _values = ['A', 'K', 'Q', 'J', '10', '7'];
 
+  // Suit options: the label glyph + the Rive enum value name on `cardSymbol`.
+  static const _suits = <({String glyph, String name})>[
+    (glyph: '♥', name: 'heart'),
+    (glyph: '♦', name: 'diamond'),
+    (glyph: '♠', name: 'spade'),
+    (glyph: '♣', name: 'club'),
+  ];
+
+  int _colorIndex = 0;
+  String _value = 'A';
+  String _suit = 'heart';
+
+  rive.ViewModelInstance get _back =>
+      widget.vm.viewModel('propertyOfVmBackCard')!;
+  rive.ViewModelInstance get _front =>
+      widget.vm.viewModel('propertyOfVmFrontCard')!;
+
+  void _pickColor(int i) {
+    setState(() => _colorIndex = i);
+    final back = _back;
+    back.image('assetBg')?.value = null;
+    back.boolean('hasCustomBg')?.value = false;
+    back.color('colorBg')?.value = _swatches[i];
+  }
+
+  void _pickValue(String v) {
+    setState(() => _value = v);
+    _front.string('valueCard')?.value = v;
+  }
+
+  void _pickSuit(String name) {
+    setState(() => _suit = name);
+    _front.enumerator('cardSymbol')?.value = name;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final back = vm.propertyOfVmBackCard;
-    final front = vm.propertyOfVmFrontCard;
-
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
@@ -422,84 +464,55 @@ class _CardStep3Hud extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _HudLabel('Back color'),
-          StreamBuilder<Color>(
-            stream: back.colorBgStream,
-            initialData: back.colorBg,
-            builder: (context, snap) {
-              final current = snap.data ?? back.colorBg;
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final c in _swatches)
-                    _Swatch(
-                      color: c,
-                      selected: current.toARGB32() == c.toARGB32(),
-                      onTap: () => back
-                        ..resetAssetBg()
-                        ..hasCustomBg = false
-                        ..colorBg = c,
-                    ),
-                ],
-              );
-            },
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < _swatches.length; i++)
+                _Swatch(
+                  color: _swatches[i],
+                  selected: i == _colorIndex,
+                  onTap: () => _pickColor(i),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           const _HudLabel('Bound image'),
-          _ImageBinder(back: back),
+          _ImageBinder(back: _back),
           const SizedBox(height: 16),
           const _HudLabel('Value'),
-          StreamBuilder<String>(
-            stream: front.valueCardStream,
-            initialData: front.valueCard,
-            builder: (context, snap) {
-              final current = snap.data ?? front.valueCard;
-              return Wrap(
-                spacing: 6,
-                children: [
-                  for (final v in _values)
-                    _PillChip(
-                      label: v,
-                      selected: current == v,
-                      onTap: () => front.valueCard = v,
-                    ),
-                ],
-              );
-            },
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final v in _values)
+                _PillChip(
+                  label: v,
+                  selected: _value == v,
+                  onTap: () => _pickValue(v),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           const _HudLabel('Suit'),
-          StreamBuilder<step3.CardSymbol>(
-            stream: front.cardSymbolStream,
-            initialData: front.cardSymbol,
-            builder: (context, snap) {
-              final current = snap.data ?? front.cardSymbol;
-              return Wrap(
-                spacing: 6,
-                children: [
-                  for (final s in step3.CardSymbol.values)
-                    _PillChip(
-                      label: _glyph(s),
-                      selected: current == s,
-                      onTap: () => front.cardSymbol = s,
-                    ),
-                ],
-              );
-            },
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final s in _suits)
+                _PillChip(
+                  label: s.glyph,
+                  selected: _suit == s.name,
+                  onTap: () => _pickSuit(s.name),
+                ),
+            ],
           ),
           const SizedBox(height: 18),
-          _FlipButton(onPressed: vm.triggerFlip),
+          _FlipButton(
+            onPressed: () => widget.vm.trigger('triggerFlip')?.trigger(),
+          ),
         ],
       ),
     );
   }
-
-  static String _glyph(step3.CardSymbol s) => switch (s) {
-    step3.CardSymbol.heart => '♥',
-    step3.CardSymbol.diamond => '♦',
-    step3.CardSymbol.spade => '♠',
-    step3.CardSymbol.club => '♣',
-  };
 }
 
 /// Small caps section label in brand red.
@@ -603,7 +616,8 @@ class _PillChip extends StatelessWidget {
 class _ImageBinder extends StatefulWidget {
   const _ImageBinder({required this.back});
 
-  final step3.PropertyOfVmBackCard back;
+  /// The nested back-card view-model instance (`propertyOfVmBackCard`).
+  final rive.ViewModelInstance back;
 
   @override
   State<_ImageBinder> createState() => _ImageBinderState();
@@ -700,16 +714,14 @@ class _ImageBinderState extends State<_ImageBinder> {
     final image = _images[index];
     if (image == null) return;
     setState(() => _selected = index);
-    widget.back
-      ..hasCustomBg = true
-      ..updateAssetBg(image);
+    widget.back.boolean('hasCustomBg')?.value = true;
+    widget.back.image('assetBg')?.value = image;
   }
 
   void _reset() {
     setState(() => _selected = null);
-    widget.back
-      ..resetAssetBg()
-      ..hasCustomBg = false;
+    widget.back.image('assetBg')?.value = null;
+    widget.back.boolean('hasCustomBg')?.value = false;
   }
 
   @override

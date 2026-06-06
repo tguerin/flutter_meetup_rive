@@ -5,7 +5,10 @@ import 'package:rive/rive.dart' as rive;
 import 'slides/betclic/betclic_brand.dart';
 import 'slides/betclic/betclic_content_slides.dart';
 import 'slides/betclic/betclic_cover_slides.dart';
+import 'slides/advanced_slides.dart';
 import 'slides/betclic/betclic_video_slide.dart';
+import 'slides/build_game_slides.dart';
+import 'slides/panel_memory_slide.dart';
 import 'slides/rive_intro_slides.dart';
 import 'slides/rive_step_slides.dart';
 
@@ -27,9 +30,7 @@ class MeetupDeck extends StatelessWidget {
           dark: FlutterDeckBackground.solid(Color(0xFF111111)),
         ),
         controls: FlutterDeckControlsConfiguration(
-          shortcuts: FlutterDeckShortcutsConfiguration(
-            enabled: true,
-          ),
+          shortcuts: FlutterDeckShortcutsConfiguration(enabled: true),
         ),
         progressIndicator: FlutterDeckProgressIndicator.solid(
           color: Color(0xFFEC407A),
@@ -42,50 +43,36 @@ class MeetupDeck extends StatelessWidget {
           subtitle: 'Animate your apps like never before',
           date: '27/05/2026',
         ),
-        const BetclicWelcomeSlide(),
-        BetclicBulletSlide(
-          route: '/agenda',
-          title: 'Agenda',
-          pageNumber: 2,
-          bullets: const [
-            'What Rive is and why it fits Flutter',
-            'Rive vs Lottie',
-            'State machines & data binding',
-            'Strongly-typed View Models from Dart',
-            'Live demo: the interactive card',
-          ],
-        ),
-        WhatsRiveSlide(pageNumber: 3),
-        RiveVsLottieImageSlide(pageNumber: 4),
-        RiveVsLottieBulletsSlide(pageNumber: 5),
+        WhatsRiveSlide(pageNumber: 2),
+        RiveVsLottieImageSlide(pageNumber: 3),
+        RiveVsFlutterAnimateSlide(pageNumber: 4),
+        const BuildIntroSlide(),
+        const MinigameSlide(),
         BetclicVideoSlide(
           route: '/rive-step-1-video',
-          title: 'Rive 1 — Design',
-          subtitle: 'How the designer built it in the Rive editor.',
+          title: 'Design',
           asset: 'assets/record_step_1.mp4',
-          pageNumber: 6,
+          pageNumber: 5,
         ),
-        RiveStep1Slide(pageNumber: 7),
+        RiveStep1Slide(pageNumber: 6),
         BetclicVideoSlide(
           route: '/rive-step-2-video',
-          title: 'Rive 2 — Animation & data binding',
-          subtitle: 'How the designer built it in the Rive editor.',
+          title: 'Animation & Data Binding',
           asset: 'assets/record_step_2.mp4',
-          pageNumber: 8,
+          pageNumber: 7,
         ),
-        RiveStep2Slide(pageNumber: 9),
+        RiveStep2Slide(pageNumber: 8),
         BetclicVideoSlide(
           route: '/rive-step-3-video',
-          title: 'Rive 3 — Customization',
-          subtitle: 'How the designer built it in the Rive editor.',
+          title: 'Customization',
           asset: 'assets/record_step_3.mp4',
-          pageNumber: 10,
+          pageNumber: 9,
         ),
-        RiveStep3Slide(pageNumber: 11),
+        RiveStep3Slide(pageNumber: 10),
         BetclicStatementSlide(
           route: '/statement',
           title: 'Key takeaway',
-          pageNumber: 12,
+          pageNumber: 11,
           spans: const [
             BetclicSpan.plain('Rive lets design and engineering share '),
             BetclicSpan.red('one source of truth'),
@@ -94,6 +81,9 @@ class MeetupDeck extends StatelessWidget {
             BetclicSpan.plain('.'),
           ],
         ),
+        PanelMemorySlide(pageNumber: 12),
+        AssetStrategySlide(pageNumber: 13),
+        GeneratorSlide(pageNumber: 14),
         const BetclicQaSlide(),
         const BetclicThankYouSlide(
           subtitle: 'Now find the A of hearts →',

@@ -37,7 +37,14 @@ flutter:
     - assets/branding/bg_thanks.png
     - assets/rive_logo.png
     - assets/rive_main_page.png
-    - assets/lottie_vs_rive.png
+    - assets/lottie_files.png
+    - assets/lottie_vs_rive.mp4
+    - assets/anim_code_2.png
+    - assets/anim_code_6.png
+    - assets/anim_code_3.png
+    - assets/anim_code_4.png
+    - assets/anim_code_5.png
+    - assets/asset_strategy.png
     # Heavy designer recordings: bundled only in the macOS `desktop` flavor
     # (flavor-conditional assets), so the web/GitHub Pages build stays light.
     - path: assets/record_step_1.mp4

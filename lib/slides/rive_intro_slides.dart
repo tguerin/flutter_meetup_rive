@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
+import 'package:video_player/video_player.dart';
 
 import 'betclic/betclic_brand.dart';
 import 'betclic/betclic_frame.dart';
@@ -54,8 +55,8 @@ class WhatsRiveSlide extends FlutterDeckSlideWidget {
   }
 }
 
-/// "Rive vs Lottie" — the comparison image (many Lottie exports vs one bound
-/// `.riv`).
+/// "Rive vs Lottie" — the pile of Lottie JSON exports on the left, an arrow,
+/// and a single bound `.riv` (label + the live reward animation) on the right.
 class RiveVsLottieImageSlide extends FlutterDeckSlideWidget {
   RiveVsLottieImageSlide({super.key, this.pageNumber})
     : super(
@@ -73,75 +74,245 @@ class RiveVsLottieImageSlide extends FlutterDeckSlideWidget {
       builder: (_) => BetclicFrame(
         title: 'Rive vs Lottie',
         pageNumber: pageNumber,
-        child: Center(
-          child: Image.asset('assets/lottie_vs_rive.png', fit: BoxFit.contain),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Left: the many Lottie JSON exports.
+            Expanded(
+              child: Center(
+                child: Image.asset('assets/lottie_files.png', fit: BoxFit.contain),
+              ),
+            ),
+            // Long arrow left → right, spanning the gap between the two sides.
+            const SizedBox(
+              width: 150,
+              height: 48,
+              child: _LongArrow(color: BetclicBrand.red),
+            ),
+            // Right: the single .riv — label on top, the live animation below.
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/rive_logo.png', height: 150),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'ic_reward.riv',
+                    style: TextStyle(
+                      fontFamily: BetclicBrand.fontFamily,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: BetclicBrand.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '42 kb',
+                    style: TextStyle(
+                      fontFamily: BetclicBrand.fontFamily,
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: BetclicBrand.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Flexible(
+                    child: _LoopingVideo(asset: 'assets/lottie_vs_rive.mp4'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// "Rive vs Lottie" — what Rive does that Lottie can't (easily).
-class RiveVsLottieBulletsSlide extends FlutterDeckSlideWidget {
-  RiveVsLottieBulletsSlide({super.key, this.pageNumber})
+/// A long horizontal arrow (line + head) that fills its given width.
+class _LongArrow extends StatelessWidget {
+  const _LongArrow({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _ArrowPainter(color), size: Size.infinite);
+  }
+}
+
+class _ArrowPainter extends CustomPainter {
+  const _ArrowPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cy = size.height / 2;
+    const headLen = 16.0;
+    const headHalf = 10.0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    // Shaft.
+    canvas.drawLine(Offset(0, cy), Offset(size.width - headLen, cy), paint);
+    // Arrowhead.
+    final head = Path()
+      ..moveTo(size.width, cy)
+      ..lineTo(size.width - headLen, cy - headHalf)
+      ..lineTo(size.width - headLen, cy + headHalf)
+      ..close();
+    canvas.drawPath(head, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_ArrowPainter oldDelegate) => oldDelegate.color != color;
+}
+
+/// A small looping, muted, auto-playing video used inline on a slide.
+class _LoopingVideo extends StatefulWidget {
+  const _LoopingVideo({required this.asset});
+
+  final String asset;
+
+  @override
+  State<_LoopingVideo> createState() => _LoopingVideoState();
+}
+
+class _LoopingVideoState extends State<_LoopingVideo> {
+  late final VideoPlayerController _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset(widget.asset)
+      ..setLooping(true)
+      ..setVolume(0);
+    _controller
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          setState(() => _ready = true);
+          _controller.play();
+        })
+        .catchError((_) {});
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: VideoPlayer(_controller),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Rive vs Flutter Animate" — to hand-roll the same thing in Flutter you write
+/// a *lot* of imperative animation spec code. Each "next" fades in another
+/// screenshot, scattered and overlapping, so the pile visibly grows.
+class RiveVsFlutterAnimateSlide extends FlutterDeckSlideWidget {
+  RiveVsFlutterAnimateSlide({super.key, this.pageNumber})
     : super(
         configuration: const FlutterDeckSlideConfiguration(
-          route: '/rive-vs-lottie-bullets',
-          title: 'Rive vs Lottie — why Rive',
+          route: '/rive-vs-flutter-animate',
+          title: 'Rive vs Flutter Animate',
+          steps: 5, // == _cards.length
         ),
       );
 
   final int? pageNumber;
 
-  static const _bullets = <String>[
-    'Interactivity & state machines — react to input, not just play a fixed timeline',
-    'Data binding — drive text, colors, numbers and images at runtime from Dart',
-    'Runtime customization — recolor, swap assets, change values without re-exporting',
-    'One file, many variants — a single .riv replaces dozens of Lottie JSON exports (smaller bundle)',
-    'Two-way events — the animation can call back into your app',
-    'Design, animate and wire logic in one editor — no per-change developer round-trip',
+  // Scattered, rotated, overlapping placements — deliberately misorganized.
+  // Large so the code stays readable; overlap/overflow is intentional.
+  static const _cards = <({String asset, Alignment align, double angle, double width})>[
+    (asset: 'assets/anim_code_2.png', align: Alignment(-0.92, -0.7), angle: -0.05, width: 620),
+    (asset: 'assets/anim_code_3.png', align: Alignment(0.6, -0.72), angle: 0.06, width: 600),
+    (asset: 'assets/anim_code_6.png', align: Alignment(0.05, 0.02), angle: -0.03, width: 600),
+    (asset: 'assets/anim_code_4.png', align: Alignment(-0.7, 0.85), angle: 0.05, width: 660),
+    (asset: 'assets/anim_code_5.png', align: Alignment(0.78, 0.78), angle: -0.06, width: 620),
   ];
 
   @override
   FlutterDeckSlide build(BuildContext context) {
     return FlutterDeckSlide.blank(
       builder: (_) => BetclicFrame(
-        title: 'Rive vs Lottie — why Rive',
+        title: 'Rive vs Flutter Animate',
         pageNumber: pageNumber,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final b in _bullets)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 9, right: 18),
-                      width: 12,
-                      height: 12,
-                      decoration: const BoxDecoration(
-                        color: BetclicBrand.red,
-                        shape: BoxShape.circle,
+        child: FlutterDeckSlideStepsBuilder(
+          builder: (context, step) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < _cards.length; i++)
+                Align(
+                  alignment: _cards[i].align,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOut,
+                    opacity: step > i ? 1 : 0,
+                    child: Transform.rotate(
+                      angle: _cards[i].angle,
+                      // Filter the rotated layer so the card edges/text aren't
+                      // jagged.
+                      filterQuality: FilterQuality.medium,
+                      child: _CodeCard(
+                        asset: _cards[i].asset,
+                        width: _cards[i].width,
                       ),
                     ),
-                    Expanded(
-                      child: Text(
-                        b,
-                        style: const TextStyle(
-                          fontFamily: BetclicBrand.fontFamily,
-                          fontSize: 23,
-                          height: 1.3,
-                          color: BetclicBrand.ink,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A floating "code screenshot" card with rounded corners + shadow.
+class _CodeCard extends StatelessWidget {
+  const _CodeCard({required this.asset, required this.width});
+
+  final String asset;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.asset(
+          asset,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
         ),
       ),
     );

@@ -55,7 +55,7 @@ class _MinigameWidgetState extends State<MinigameWidget> {
       builder: (context, state) => switch (state) {
         rive.RiveLoaded() => rive.RiveWidget(
           controller: state.controller,
-          fit: rive.Fit.contain,
+          fit: rive.Fit.layout,
           alignment: Alignment.center,
         ),
         rive.RiveLoading() => const Center(child: CircularProgressIndicator()),
