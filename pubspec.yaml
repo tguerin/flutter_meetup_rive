@@ -29,6 +29,8 @@ flutter:
     - assets/card_step_2.riv
     - assets/card_step_3.riv
     - assets/betclic_logo.png
+    - assets/avatar_thomas.png
+    - assets/avatar_nicolas.jpg
     - assets/branding/bg_cover_logo.png
     - assets/branding/bg_welcome.png
     - assets/branding/bg_section.png
@@ -38,7 +40,10 @@ flutter:
     - assets/rive_logo.png
     - assets/rive_main_page.png
     - assets/lottie_files.png
+    - assets/game_screen.png
+    - assets/arrow_chevron.png
     - assets/lottie_vs_rive.mp4
+    - assets/montage_rive.mp4
     - assets/anim_code_2.png
     - assets/anim_code_6.png
     - assets/anim_code_3.png

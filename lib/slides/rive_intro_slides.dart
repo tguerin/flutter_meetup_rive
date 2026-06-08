@@ -55,8 +55,9 @@ class WhatsRiveSlide extends FlutterDeckSlideWidget {
   }
 }
 
-/// "Rive vs Lottie" — the pile of Lottie JSON exports on the left, an arrow,
-/// and a single bound `.riv` (label + the live reward animation) on the right.
+/// "Rive vs Lottie" — three columns, chevron-separated: the game screen, the
+/// pile of 11 Lotties it takes, and the single bound `.riv` (logo + the live
+/// reward animation).
 class RiveVsLottieImageSlide extends FlutterDeckSlideWidget {
   RiveVsLottieImageSlide({super.key, this.pageNumber})
     : super(
@@ -77,49 +78,57 @@ class RiveVsLottieImageSlide extends FlutterDeckSlideWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Left: the many Lottie JSON exports.
+            // 1 — the game screen.
+            Expanded(
+              child: Center(
+                child: Image.asset('assets/game_screen.png', fit: BoxFit.contain),
+              ),
+            ),
+            const _Chevron(),
+            // 2 — the 11 Lotties it takes.
             Expanded(
               child: Center(
                 child: Image.asset('assets/lottie_files.png', fit: BoxFit.contain),
               ),
             ),
-            // Long arrow left → right, spanning the gap between the two sides.
-            const SizedBox(
-              width: 150,
-              height: 48,
-              child: _LongArrow(color: BetclicBrand.red),
-            ),
-            // Right: the single .riv — label on top, the live animation below.
+            const _Chevron(),
+            // 3 — the single .riv: logo on top of the live reward animation.
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/rive_logo.png', height: 150),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'ic_reward.riv',
-                    style: TextStyle(
-                      fontFamily: BetclicBrand.fontFamily,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: BetclicBrand.ink,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/rive_logo.png', height: 120),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'ic_reward.riv',
+                      style: TextStyle(
+                        fontFamily: BetclicBrand.fontFamily,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: BetclicBrand.ink,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '42 kb',
-                    style: TextStyle(
-                      fontFamily: BetclicBrand.fontFamily,
-                      fontSize: 18,
-                      fontStyle: FontStyle.italic,
-                      color: BetclicBrand.muted,
+                    const SizedBox(height: 2),
+                    const Text(
+                      '42 kb',
+                      style: TextStyle(
+                        fontFamily: BetclicBrand.fontFamily,
+                        fontSize: 17,
+                        fontStyle: FontStyle.italic,
+                        color: BetclicBrand.muted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Flexible(
-                    child: _LoopingVideo(asset: 'assets/lottie_vs_rive.mp4'),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    // Fixed size (no Flexible) so the logo + label + video stay
+                    // a tight group that Center keeps vertically centered.
+                    const SizedBox(
+                      width: 440,
+                      height: 318,
+                      child: _LoopingVideo(asset: 'assets/lottie_vs_rive.mp4'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -129,46 +138,17 @@ class RiveVsLottieImageSlide extends FlutterDeckSlideWidget {
   }
 }
 
-/// A long horizontal arrow (line + head) that fills its given width.
-class _LongArrow extends StatelessWidget {
-  const _LongArrow({required this.color});
-
-  final Color color;
+/// The grey double-chevron used to separate the three columns.
+class _Chevron extends StatelessWidget {
+  const _Chevron();
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _ArrowPainter(color), size: Size.infinite);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Image.asset('assets/arrow_chevron.png', width: 56),
+    );
   }
-}
-
-class _ArrowPainter extends CustomPainter {
-  const _ArrowPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cy = size.height / 2;
-    const headLen = 16.0;
-    const headHalf = 10.0;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    // Shaft.
-    canvas.drawLine(Offset(0, cy), Offset(size.width - headLen, cy), paint);
-    // Arrowhead.
-    final head = Path()
-      ..moveTo(size.width, cy)
-      ..lineTo(size.width - headLen, cy - headHalf)
-      ..lineTo(size.width - headLen, cy + headHalf)
-      ..close();
-    canvas.drawPath(head, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_ArrowPainter oldDelegate) => oldDelegate.color != color;
 }
 
 /// A small looping, muted, auto-playing video used inline on a slide.

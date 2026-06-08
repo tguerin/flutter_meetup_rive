@@ -83,7 +83,7 @@ const List<_Example> _examples = [
   (
     title: 'Set the card value & suit',
     raw:
-        "// Strings everywhere — a typo is a runtime crash.\n"
+        "// Strings everywhere — a typo and your animation is broken.\n"
         "final front = vmi.viewModel('propertyOfVmFrontCard');\n"
         "front?.string('valueCard')?.value = 'A';\n"
         "front?.enumerator('cardSymbol')?.value = 'heart';",

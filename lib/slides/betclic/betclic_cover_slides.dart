@@ -77,8 +77,108 @@ class BetclicCoverSlide extends FlutterDeckSlideWidget {
                 ),
               ),
             ),
+            const Positioned(
+              left: 48,
+              bottom: 40,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SpeakerCard(
+                    asset: 'assets/avatar_thomas.png',
+                    name: 'Thomas Guerin',
+                    title: 'Staff Software Engineer',
+                    imageAlignment: Alignment(0, -0.6),
+                  ),
+                  SizedBox(height: 12),
+                  _SpeakerCard(
+                    asset: 'assets/avatar_nicolas.jpg',
+                    name: 'Nicolas Faveraux',
+                    title: 'Motion Designer',
+                    imageAlignment: Alignment(0, -0.2),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A small white card: circular avatar + name (line 1) and role (line 2).
+class _SpeakerCard extends StatelessWidget {
+  const _SpeakerCard({
+    required this.asset,
+    required this.name,
+    required this.title,
+    this.imageAlignment = Alignment.center,
+  });
+
+  final String asset;
+  final String name;
+  final String title;
+  final Alignment imageAlignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 360,
+      padding: const EdgeInsets.fromLTRB(16, 14, 22, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: AssetImage(asset),
+                fit: BoxFit.cover,
+                alignment: imageAlignment,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontFamily: BetclicBrand.fontFamily,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: BetclicBrand.ink,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: BetclicBrand.fontFamily,
+                    fontSize: 16,
+                    color: BetclicBrand.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
