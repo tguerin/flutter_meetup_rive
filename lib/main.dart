@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 import 'package:rive/rive.dart' as rive;
 
@@ -30,7 +31,19 @@ class MeetupDeck extends StatelessWidget {
           dark: FlutterDeckBackground.solid(Color(0xFF111111)),
         ),
         controls: FlutterDeckControlsConfiguration(
-          shortcuts: FlutterDeckShortcutsConfiguration(enabled: true),
+          shortcuts: FlutterDeckShortcutsConfiguration(
+            enabled: true,
+            // Arrow keys + the Page Down / Page Up a Logitech (and most)
+            // presenter remotes send.
+            nextSlide: {
+              SingleActivator(LogicalKeyboardKey.arrowRight),
+              SingleActivator(LogicalKeyboardKey.pageDown),
+            },
+            previousSlide: {
+              SingleActivator(LogicalKeyboardKey.arrowLeft),
+              SingleActivator(LogicalKeyboardKey.pageUp),
+            },
+          ),
         ),
         progressIndicator: FlutterDeckProgressIndicator.solid(
           color: Color(0xFFEC407A),
@@ -41,7 +54,7 @@ class MeetupDeck extends StatelessWidget {
         const BetclicCoverSlide(
           title: 'Rive × Flutter',
           subtitle: 'Animate your apps like never before',
-          date: '27/05/2026',
+          date: '08/06/2026',
         ),
         WhatsRiveSlide(pageNumber: 2),
         RiveVsLottieImageSlide(pageNumber: 3),
